@@ -1,0 +1,606 @@
+===== PROJECT CODE REFERENCE =====
+ChatGPT Interface - React & Tailwind CSS Implementation
+Updated: May 6, 2025
+
+===== package.json =====
+{
+  "name": "chatgpt-interface",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.23",
+    "tailwindcss": "^3.3.2"
+  }
+}
+
+===== tailwind.config.js =====
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'chatgpt-gray': '#f7f7f8',
+        'chatgpt-blue': '#10a37f',
+        'user-message': '#f7f7f8',
+        'assistant-message': '#ffffff',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-in-out',
+        'color-transition': 'colorTransition 0.5s ease-in-out',
+        'progress-grow': 'progressGrow 0.3s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: 0, transform: 'translateY(10px)' },
+          '100%': { opacity: 1, transform: 'translateY(0)' },
+        },
+        colorTransition: {
+          '0%': { backgroundColor: 'var(--color-from)' },
+          '100%': { backgroundColor: 'var(--color-to)' },
+        },
+        progressGrow: {
+          '0%': { width: '0%' },
+          '100%': { width: '100%' },
+        },
+      },
+      transitionProperty: {
+        'background': 'background-color',
+        'width': 'width',
+      },
+      transitionDuration: {
+        '300': '300ms',
+        '500': '500ms',
+      },
+      transitionTimingFunction: {
+        'ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    },
+  },
+  plugins: [],
+}
+
+===== postcss.config.js =====
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+===== src/index.js =====
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+===== src/index.css =====
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+/* Textarea auto-resize */
+.auto-resize-textarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 24px;
+  max-height: 200px;
+}
+
+===== src/App.js =====
+import React, { useState, useEffect, useRef } from 'react';
+import { getPromptColor } from './utils/colorUtils';
+import Header from './components/Header';
+import ChatHistory from './components/ChatHistory';
+import ChatInput from './components/ChatInput';
+
+function App() {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Function to handle sending a new message
+  const handleSendMessage = async (message) => {
+    if (!message.trim()) return;
+    
+    // Add user message to chat
+    const userMessage = {
+      id: Date.now(),
+      text: message,
+      sender: 'user',
+      timestamp: new Date().toISOString(),
+      length: message.length,
+      colorClass: getPromptColor(message.length).background,
+    };
+    
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    setLoading(true);
+    
+    // Simulate API call with a delay
+    setTimeout(() => {
+      // Mock response from assistant
+      const response = getAssistantResponse(message);
+      const assistantMessage = {
+        id: Date.now() + 1,
+        text: response,
+        sender: 'assistant',
+        timestamp: new Date().toISOString(),
+        length: response.length,
+        colorClass: getPromptColor(response.length).background,
+      };
+      
+      setMessages(prevMessages => [...prevMessages, assistantMessage]);
+      setLoading(false);
+    }, 1000);
+  };
+
+  // Mock function to generate assistant responses
+  const getAssistantResponse = (message) => {
+    const responses = [
+      "I'm an AI assistant, how can I help you today?",
+      "That's an interesting question. Let me think about that...",
+      "I'm here to assist with any questions you might have.",
+      "I understand your question. Here's what I know about that topic...",
+      "Thanks for asking! I'd be happy to help with that.",
+    ];
+    
+    // For demo purposes, just return a random response
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-chatgpt-gray">
+      <Header />
+      <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
+        <ChatHistory 
+          messages={messages} 
+          loading={loading} 
+          messagesEndRef={messagesEndRef} 
+        />
+        <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
+      </main>
+    </div>
+  );
+}
+
+export default App;
+
+===== src/reportWebVitals.js =====
+const reportWebVitals = (onPerfEntry) => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+
+===== src/components/Header.js =====
+import React from 'react';
+
+const Header = () => {
+  return (
+    <header className="bg-white border-b border-gray-200 py-3 px-4 flex justify-between items-center">
+      <div className="flex-1 flex justify-start">
+        {/* Placeholder for additional buttons */}
+        <button className="p-2 rounded-md hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+      
+      <div className="flex-1 flex justify-center">
+        <h1 className="text-xl font-semibold text-center text-gray-800">ChatGPT</h1>
+      </div>
+      
+      <div className="flex-1 flex justify-end gap-2">
+        <button className="p-2 rounded-md hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+          </svg>
+        </button>
+        <button className="p-2 rounded-md hover:bg-gray-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+
+===== src/components/ChatHistory.js =====
+import React from 'react';
+import Message from './Message';
+
+const ChatHistory = ({ messages, loading, messagesEndRef }) => {
+  return (
+    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {messages.length === 0 ? (
+        <div className="h-full flex flex-col items-center justify-center text-gray-500">
+          <div className="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-medium mb-2">How can I help you today?</h2>
+          <p className="text-center max-w-md">
+            Ask me anything, from creative tasks to complex problems. I'm here to assist!
+          </p>
+        </div>
+      ) : (
+        <>
+          {messages.map((message) => (
+            <Message key={message.id} message={message} />
+          ))}
+          {loading && (
+            <div className="animate-pulse flex space-x-2 items-center justify-center">
+              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </>
+      )}
+    </div>
+  );
+};
+
+export default ChatHistory;
+
+===== src/components/Message.js =====
+import React from 'react';
+
+const Message = ({ message }) => {
+  const isUser = message.sender === 'user';
+  
+  return (
+    <div 
+      className={`animate-fade-in flex ${isUser ? 'justify-end' : 'justify-start'}`}
+    >
+      <div 
+        className={`max-w-[80%] md:max-w-[70%] rounded-lg p-4 shadow-sm transition-all duration-500 ease-in-out ${
+          isUser 
+            ? `${message.colorClass || 'bg-chatgpt-blue'} text-white rounded-br-none` 
+            : 'bg-white text-gray-800 rounded-bl-none'
+        }`}
+      >
+        <div className="flex items-start">
+          {!isUser && (
+            <div className="mr-3 flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                </svg>
+              </div>
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm md:text-base whitespace-pre-wrap">{message.text}</p>
+          </div>
+          {isUser && (
+            <div className="ml-3 flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="mt-1 text-xs text-right opacity-70">
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Message;
+
+===== src/components/ChatInput.js =====
+import React, { useState, useRef, useEffect } from 'react';
+import { getPromptColor, countWords } from '../utils/colorUtils';
+
+const ChatInput = ({ onSendMessage, disabled }) => {
+  const [message, setMessage] = useState('');
+  const textareaRef = useRef(null);
+  const [colorClasses, setColorClasses] = useState(getPromptColor(0));
+  const [wordCount, setWordCount] = useState(0);
+
+  // Auto-resize the textarea based on content and update color classes
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+    
+    // Update color classes based on message length
+    setColorClasses(getPromptColor(message.length));
+    
+    // Update word count
+    setWordCount(countWords(message));
+  }, [message]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (message.trim() && !disabled) {
+      onSendMessage(message);
+      setMessage('');
+      
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  return (
+    <div className="p-4 border-t border-gray-200 bg-white">
+      <form 
+        onSubmit={handleSubmit}
+        className="max-w-3xl mx-auto relative"
+      >
+        <div className="relative flex items-center transition-background duration-500 ease-in-out rounded-lg p-1">
+          <textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Message ChatGPT..."
+            className={`auto-resize-textarea w-full ${colorClasses.background} border ${colorClasses.border} rounded-lg py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-chatgpt-blue focus:border-transparent transition-all duration-500 ease-in-out`}
+            rows={1}
+            disabled={disabled}
+            aria-label="Chat message input"
+            style={{ color: message.length > 0 ? 'inherit' : '#6B7280' }}
+          />
+          <button
+            type="submit"
+            className={`absolute right-3 p-1 rounded-md ${
+              message.trim() && !disabled
+                ? `${colorClasses.text} hover:bg-gray-100`
+                : 'text-gray-400 cursor-not-allowed'
+            }`}
+            disabled={!message.trim() || disabled}
+            aria-label="Send message"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+          </button>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="h-1 w-full bg-gray-200 rounded-full mt-1 overflow-hidden">
+          <div 
+            className={`h-full ${colorClasses.progress} transition-width duration-300 ease-in-out animate-progress-grow rounded-full`}
+            style={{ width: `${colorClasses.percent}%` }}
+          ></div>
+        </div>
+        
+        {/* Character and word count indicators */}
+        <div className="flex justify-between mt-1">
+          <div className={`text-xs ${colorClasses.text}`}>
+            {wordCount} {wordCount === 1 ? 'word' : 'words'}
+          </div>
+          <div className={`text-xs ${colorClasses.text}`}>
+            {message.length} {message.length === 1 ? 'character' : 'characters'}
+          </div>
+        </div>
+        <p className="text-xs text-center mt-3 text-gray-500">
+          ChatGPT can make mistakes. Consider checking important information.
+        </p>
+      </form>
+    </div>
+  );
+};
+
+export default ChatInput;
+
+===== src/utils/colorUtils.js =====
+/**
+ * Counts the number of words in a string
+ * @param {string} text - The text to count words in
+ * @returns {number} - The number of words
+ */
+export const countWords = (text) => {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+};
+
+/**
+ * Determines the appropriate color class based on input length
+ * @param {number} length - The character length of the input
+ * @returns {Object} - Object containing background, text, and progress bar color classes
+ */
+export const getPromptColor = (length) => {
+  if (length <= 50) {
+    return {
+      background: 'bg-green-100',
+      text: 'text-green-800',
+      border: 'border-green-300',
+      progress: 'bg-green-500',
+      percent: Math.min(100, (length / 50) * 100)
+    };
+  } else if (length <= 150) {
+    return {
+      background: 'bg-yellow-100',
+      text: 'text-yellow-800',
+      border: 'border-yellow-300',
+      progress: 'bg-yellow-500',
+      percent: Math.min(100, ((length - 50) / 100) * 100)
+    };
+  } else if (length <= 300) {
+    return {
+      background: 'bg-red-100',
+      text: 'text-red-800',
+      border: 'border-red-300',
+      progress: 'bg-red-500',
+      percent: Math.min(100, ((length - 150) / 150) * 100)
+    };
+  } else {
+    return {
+      background: 'bg-purple-100',
+      text: 'text-purple-800',
+      border: 'border-purple-300',
+      progress: 'bg-purple-500',
+      percent: 100
+    };
+  };
+};
+
+===== public/index.html =====
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="ChatGPT Interface - A modern, responsive chat interface"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <title>ChatGPT Interface</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
+
+===== public/manifest.json =====
+{
+  "short_name": "ChatGPT Interface",
+  "name": "ChatGPT Interface - A modern, responsive chat interface",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#10a37f",
+  "background_color": "#f7f7f8"
+}
