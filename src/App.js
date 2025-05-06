@@ -3,11 +3,13 @@ import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatInput from './components/ChatInput';
 import ColorChangingTextareaExample from './components/ColorChangingTextareaExample';
+import { useTheme } from './contexts/ThemeContext';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const { darkMode } = useTheme();
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -67,22 +69,22 @@ function App() {
   const [showExample, setShowExample] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen bg-chatgpt-gray">
+    <div className="flex flex-col h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
       <Header />
-      <div className="bg-white py-2 px-4 border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 py-2 px-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
         <button 
           onClick={() => setShowExample(!showExample)}
-          className="px-4 py-2 bg-chatgpt-blue text-white rounded-md hover:bg-opacity-90 transition-all"
+          className="px-4 py-2 bg-chatgpt-blue dark:bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition-all"
         >
           {showExample ? 'Show Chat Interface' : 'Show Textarea Example'}
         </button>
       </div>
       {showExample ? (
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto dark:bg-gray-900 transition-colors duration-300">
           <ColorChangingTextareaExample />
         </main>
       ) : (
-        <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
+        <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full dark:bg-gray-900 transition-colors duration-300">
           <ChatHistory 
             messages={messages} 
             loading={loading} 

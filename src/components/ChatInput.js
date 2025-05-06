@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getPromptColor, countWords } from '../utils/colorUtils';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ChatInput = ({ onSendMessage, disabled }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef(null);
   const [colorClasses, setColorClasses] = useState(getPromptColor(0));
   const [wordCount, setWordCount] = useState(0);
+  const { darkMode } = useTheme();
 
   // Auto-resize the textarea based on content and update color classes
   useEffect(() => {
@@ -42,7 +44,7 @@ const ChatInput = ({ onSendMessage, disabled }) => {
   };
 
   return (
-    <div className="p-4 border-t border-gray-200 bg-white">
+    <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-300">
       <form 
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto relative"
@@ -54,7 +56,7 @@ const ChatInput = ({ onSendMessage, disabled }) => {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Message ChatGPT..."
-            className={`auto-resize-textarea w-full ${colorClasses.background} border ${colorClasses.border} rounded-lg py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-chatgpt-blue focus:border-transparent transition-all duration-500 ease-in-out`}
+            className={`auto-resize-textarea w-full ${colorClasses.background} border ${colorClasses.border} rounded-lg py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-chatgpt-blue focus:border-transparent transition-all duration-500 ease-in-out dark:text-gray-100`}
             rows={1}
             disabled={disabled}
             aria-label="Chat message input"
@@ -77,7 +79,7 @@ const ChatInput = ({ onSendMessage, disabled }) => {
         </div>
         
         {/* Progress bar */}
-        <div className="h-1 w-full bg-gray-200 rounded-full mt-1 overflow-hidden">
+        <div className="h-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full mt-1 overflow-hidden transition-colors duration-300">
           <div 
             className={`h-full ${colorClasses.progress} transition-width duration-300 ease-in-out animate-progress-grow rounded-full`}
             style={{ width: `${colorClasses.percent}%` }}
@@ -93,7 +95,7 @@ const ChatInput = ({ onSendMessage, disabled }) => {
             {message.length} {message.length === 1 ? 'character' : 'characters'}
           </div>
         </div>
-        <p className="text-xs text-center mt-3 text-gray-500">
+        <p className="text-xs text-center mt-3 text-gray-500 dark:text-gray-400 transition-colors duration-300">
           ChatGPT can make mistakes. Consider checking important information.
         </p>
       </form>
