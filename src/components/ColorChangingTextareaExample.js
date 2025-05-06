@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ColorChangingTextarea from './ColorChangingTextarea';
+import { getPromptColor } from '../utils/colorUtils';
 
 const ColorChangingTextareaExample = () => {
-  const [text, setText] = useState('');
-
+  const [value, setValue] = useState('');
+  const [backgroundClass, setBackgroundClass] = useState(getPromptColor(0).background);
+  
   const handleChange = (e) => {
-    setText(e.target.value);
+    setValue(e.target.value);
   };
+  
+  // Update background color based on input length
+  useEffect(() => {
+    setBackgroundClass(getPromptColor(value.length).background);
+  }, [value]);
 
   return (
-    <div className="max-w-2xl mx-auto p-6 dark:bg-gray-900 transition-colors duration-300">
+    <div className={`max-w-2xl mx-auto p-6 ${backgroundClass} transition-all duration-500 ease-in-out`}>
       <h1 className="text-2xl font-bold mb-4 dark:text-white">Color Changing Textarea</h1>
       <p className="mb-4 text-gray-600 dark:text-gray-300">
         This textarea changes background color based on character count and includes a progress bar:
@@ -23,7 +30,7 @@ const ColorChangingTextareaExample = () => {
       
       <div className="my-6">
         <ColorChangingTextarea
-          value={text}
+          value={value}
           onChange={handleChange}
           placeholder="Start typing to see the background color change..."
           aria-label="Color changing textarea example"
