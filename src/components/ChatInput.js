@@ -47,7 +47,7 @@ const ChatInput = ({ onSendMessage, disabled, onInputChange }) => {
   };
 
   return (
-    <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className="p-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
       <form 
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto relative"

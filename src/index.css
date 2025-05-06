@@ -19,7 +19,7 @@ body {
 }
 
 .dark body {
-  background-color: #111827; /* bg-gray-900 */
+  /* Removing fixed background color to allow dynamic backgrounds */
   color: #f3f4f6; /* text-gray-100 */
 }
 

@@ -3,7 +3,7 @@ import Message from './Message';
 
 const ChatHistory = ({ messages, loading, messagesEndRef }) => {
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-6 dark:bg-gray-900 transition-colors duration-300">
+    <div className="flex-1 overflow-y-auto p-4 space-y-6 transition-colors duration-300">
       {messages.length === 0 ? (
         <div className="h-full flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
           <div className="mb-4">
