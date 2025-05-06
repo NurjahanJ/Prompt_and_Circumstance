@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTheme } from './contexts/ThemeContext';
+import { getPromptColor } from './utils/colorUtils';
 import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatInput from './components/ChatInput';
 import ColorChangingTextareaExample from './components/ColorChangingTextareaExample';
-import { useTheme } from './contexts/ThemeContext';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentInput, setCurrentInput] = useState('');
   const messagesEndRef = useRef(null);
   const { darkMode } = useTheme();
+  
+  // Get background color based on input length, but use default when there's no input
+  const backgroundColorClass = currentInput.length > 0 
+    ? getPromptColor(currentInput.length).background 
+    : 'bg-white dark:bg-gray-900';
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -69,7 +76,7 @@ function App() {
   const [showExample, setShowExample] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div className={`flex flex-col h-screen ${backgroundColorClass} transition-all duration-500 ease-in-out`}>
       <Header />
       <div className="bg-white dark:bg-gray-800 py-2 px-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
         <button 
@@ -90,7 +97,11 @@ function App() {
             loading={loading} 
             messagesEndRef={messagesEndRef} 
           />
-          <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
+          <ChatInput 
+            onSendMessage={handleSendMessage} 
+            disabled={loading} 
+            onInputChange={setCurrentInput}
+          />
         </main>
       )}
     </div>

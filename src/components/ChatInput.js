@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { getPromptColor, countWords } from '../utils/colorUtils';
 import { useTheme } from '../contexts/ThemeContext';
 
-const ChatInput = ({ onSendMessage, disabled }) => {
+const ChatInput = ({ onSendMessage, disabled, onInputChange }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef(null);
   const [colorClasses, setColorClasses] = useState(getPromptColor(0));
@@ -16,12 +16,15 @@ const ChatInput = ({ onSendMessage, disabled }) => {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
     
-    // Update color classes based on message length
+    // Update color classes based on message length and notify parent component
     setColorClasses(getPromptColor(message.length));
-    
-    // Update word count
     setWordCount(countWords(message));
-  }, [message]);
+    
+    // Notify parent component about input change for background color
+    if (onInputChange) {
+      onInputChange(message);
+    }
+  }, [message, onInputChange]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
