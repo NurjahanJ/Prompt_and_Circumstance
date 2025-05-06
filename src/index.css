@@ -13,6 +13,16 @@ body {
   overflow: hidden;
 }
 
+/* Dark mode styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #111827; /* bg-gray-900 */
+  color: #f3f4f6; /* text-gray-100 */
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -34,6 +44,15 @@ code {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #bbb;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563; /* bg-gray-600 */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* bg-gray-500 */
 }
 
 /* Textarea auto-resize */
