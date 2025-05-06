@@ -1,16 +1,57 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+
+/**
+ * Get color classes based on message length
+ * @param {number} length - The character length of the message
+ * @returns {Object} - Object containing background and text color classes
+ */
+const getMessageColors = (length) => {
+  if (length <= 50) {
+    return {
+      background: 'bg-green-100',
+      text: 'text-green-800',
+      border: 'border-green-300'
+    };
+  } else if (length <= 150) {
+    return {
+      background: 'bg-yellow-100',
+      text: 'text-yellow-800',
+      border: 'border-yellow-300'
+    };
+  } else if (length <= 300) {
+    return {
+      background: 'bg-red-100',
+      text: 'text-red-800',
+      border: 'border-red-300'
+    };
+  } else {
+    return {
+      background: 'bg-purple-100',
+      text: 'text-purple-800',
+      border: 'border-purple-300'
+    };
+  }
+};
 
 const Message = ({ message }) => {
   const isUser = message.sender === 'user';
+  
+  // Get color classes based on message length
+  const colorClasses = useMemo(() => {
+    if (isUser) {
+      return getMessageColors(message.text.length);
+    }
+    return { background: 'bg-white', text: 'text-gray-800' };
+  }, [isUser, message.text.length]);
   
   return (
     <div 
       className={`animate-fade-in flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
       <div 
-        className={`max-w-[80%] md:max-w-[70%] rounded-lg p-4 shadow-sm transition-all duration-500 ease-in-out ${
+        className={`max-w-[80%] md:max-w-[70%] rounded-lg p-4 shadow-sm animate-fade-in transition-colors duration-500 ease-in-out ${
           isUser 
-            ? `${message.colorClass || 'bg-chatgpt-blue'} text-white rounded-br-none` 
+            ? `${colorClasses.background} ${colorClasses.text} rounded-br-none` 
             : 'bg-white text-gray-800 rounded-bl-none'
         }`}
       >
@@ -25,7 +66,7 @@ const Message = ({ message }) => {
             </div>
           )}
           <div className="flex-1">
-            <p className="text-sm md:text-base whitespace-pre-wrap">{message.text}</p>
+            <p className="text-sm md:text-base whitespace-pre-wrap transition-colors duration-500 ease-in-out">{message.text}</p>
           </div>
           {isUser && (
             <div className="ml-3 flex-shrink-0">

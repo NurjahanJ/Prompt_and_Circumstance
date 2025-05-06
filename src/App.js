@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getPromptColor } from './utils/colorUtils';
 import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatInput from './components/ChatInput';
+import ColorChangingTextareaExample from './components/ColorChangingTextareaExample';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -28,8 +28,6 @@ function App() {
       text: message,
       sender: 'user',
       timestamp: new Date().toISOString(),
-      length: message.length,
-      colorClass: getPromptColor(message.length).background,
     };
     
     setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -44,8 +42,6 @@ function App() {
         text: response,
         sender: 'assistant',
         timestamp: new Date().toISOString(),
-        length: response.length,
-        colorClass: getPromptColor(response.length).background,
       };
       
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
@@ -67,17 +63,34 @@ function App() {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
+  // Toggle between chat interface and textarea example
+  const [showExample, setShowExample] = useState(false);
+
   return (
     <div className="flex flex-col h-screen bg-chatgpt-gray">
       <Header />
-      <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
-        <ChatHistory 
-          messages={messages} 
-          loading={loading} 
-          messagesEndRef={messagesEndRef} 
-        />
-        <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
-      </main>
+      <div className="bg-white py-2 px-4 border-b border-gray-200">
+        <button 
+          onClick={() => setShowExample(!showExample)}
+          className="px-4 py-2 bg-chatgpt-blue text-white rounded-md hover:bg-opacity-90 transition-all"
+        >
+          {showExample ? 'Show Chat Interface' : 'Show Textarea Example'}
+        </button>
+      </div>
+      {showExample ? (
+        <main className="flex-1 overflow-auto">
+          <ColorChangingTextareaExample />
+        </main>
+      ) : (
+        <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
+          <ChatHistory 
+            messages={messages} 
+            loading={loading} 
+            messagesEndRef={messagesEndRef} 
+          />
+          <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
+        </main>
+      )}
     </div>
   );
 }
