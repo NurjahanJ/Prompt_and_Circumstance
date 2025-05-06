@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import ColorChangingTextarea from './ColorChangingTextarea';
 import { getPromptColor } from '../utils/colorUtils';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ColorChangingTextareaExample = () => {
   const [value, setValue] = useState('');
-  const [backgroundClass, setBackgroundClass] = useState(getPromptColor(0).background);
+  const { darkMode } = useTheme();
+  const [backgroundClass, setBackgroundClass] = useState(
+    darkMode ? 'bg-gray-900' : 'bg-white'
+  );
   
   const handleChange = (e) => {
     setValue(e.target.value);
@@ -12,8 +16,24 @@ const ColorChangingTextareaExample = () => {
   
   // Update background color based on input length
   useEffect(() => {
-    setBackgroundClass(getPromptColor(value.length).background);
-  }, [value]);
+    // Determine background color based on input length and dark mode
+    if (value.length === 0) {
+      // Default background when there's no input
+      setBackgroundClass(darkMode ? 'bg-gray-900' : 'bg-white');
+    } else if (value.length <= 50) {
+      // Green background (0-50 chars)
+      setBackgroundClass(darkMode ? 'bg-green-800' : 'bg-green-100');
+    } else if (value.length <= 150) {
+      // Yellow background (51-150 chars)
+      setBackgroundClass(darkMode ? 'bg-yellow-800' : 'bg-yellow-100');
+    } else if (value.length <= 300) {
+      // Red background (151-300 chars)
+      setBackgroundClass(darkMode ? 'bg-red-800' : 'bg-red-100');
+    } else {
+      // Purple background (301+ chars)
+      setBackgroundClass(darkMode ? 'bg-purple-800' : 'bg-purple-100');
+    }
+  }, [value, darkMode]);
 
   return (
     <div className={`max-w-2xl mx-auto p-6 ${backgroundClass} transition-all duration-500 ease-in-out`}>
