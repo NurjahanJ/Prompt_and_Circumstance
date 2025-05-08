@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from './contexts/ThemeContext';
 import { getPromptColor } from './utils/colorUtils';
+import { sendMessageToOpenAI, formatConversationForOpenAI } from './utils/openaiService';
 import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatInput from './components/ChatInput';
@@ -64,13 +65,37 @@ function App() {
       timestamp: new Date().toISOString(),
     };
     
-    setMessages(prevMessages => [...prevMessages, userMessage]);
+    // Update messages with user message
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setLoading(true);
     
-    // Simulate API call with a delay
-    setTimeout(() => {
-      // Mock response from assistant
-      const response = getAssistantResponse(message);
+    try {
+      // Check if OpenAI API is configured
+      if (!process.env.REACT_APP_OPENAI_API_KEY) {
+        // Fall back to mock response if API key is not available
+        setTimeout(() => {
+          const mockResponse = getMockResponse();
+          const assistantMessage = {
+            id: Date.now() + 1,
+            text: mockResponse,
+            sender: 'assistant',
+            timestamp: new Date().toISOString(),
+          };
+          
+          setMessages(prevMessages => [...prevMessages, assistantMessage]);
+          setLoading(false);
+        }, 1000);
+        return;
+      }
+      
+      // Format conversation history for OpenAI API
+      const formattedMessages = formatConversationForOpenAI(updatedMessages);
+      
+      // Send to OpenAI API
+      const response = await sendMessageToOpenAI(formattedMessages);
+      
+      // Create assistant message with API response
       const assistantMessage = {
         id: Date.now() + 1,
         text: response,
@@ -78,13 +103,27 @@ function App() {
         timestamp: new Date().toISOString(),
       };
       
+      // Update messages with assistant response
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
+    } catch (error) {
+      // Handle error - add error message to chat
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: `Sorry, there was an error: ${error.message}`,
+        sender: 'assistant',
+        timestamp: new Date().toISOString(),
+        isError: true
+      };
+      
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+      console.error('Error getting response from OpenAI:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  // Mock function to generate assistant responses
-  const getAssistantResponse = (message) => {
+  // Mock function to generate assistant responses when API is not available
+  const getMockResponse = () => {
     const responses = [
       "I'm an AI assistant, how can I help you today?",
       "That's an interesting question. Let me think about that...",

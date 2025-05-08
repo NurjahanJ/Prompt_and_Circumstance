@@ -32,16 +32,22 @@ const getMessageColors = (length) => {
 const Message = ({ message }) => {
   const isUser = message.sender === 'user';
   
-  // Get color classes based on message length
+  // Get color classes based on message length or error status
   const colorClasses = useMemo(() => {
     if (isUser) {
       return getMessageColors(message.text.length);
+    }
+    if (message.isError) {
+      return {
+        background: 'bg-red-100 dark:bg-red-900',
+        text: 'text-red-800 dark:text-red-100'
+      };
     }
     return { 
       background: 'bg-gray-200 dark:bg-gray-700', 
       text: 'text-gray-800 dark:text-gray-200'
     };
-  }, [isUser, message.text.length]);
+  }, [isUser, message.text.length, message.isError]);
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-fade-in transition-colors duration-300`}>
