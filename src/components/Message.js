@@ -1,45 +1,79 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+
+/**
+ * Get color classes based on message length with dark mode support
+ * @param {number} length - The character length of the message
+ * @returns {Object} - Object containing background and text color classes for both light and dark modes
+ */
+const getMessageColors = (length) => {
+  if (length <= 50) {
+    return { 
+      background: 'bg-green-100 dark:bg-green-800', 
+      text: 'text-green-800 dark:text-green-100' 
+    };
+  } else if (length <= 150) {
+    return { 
+      background: 'bg-yellow-100 dark:bg-yellow-800', 
+      text: 'text-yellow-800 dark:text-yellow-100' 
+    };
+  } else if (length <= 300) {
+    return { 
+      background: 'bg-red-100 dark:bg-red-800', 
+      text: 'text-red-800 dark:text-red-100' 
+    };
+  } else {
+    return { 
+      background: 'bg-purple-100 dark:bg-purple-800', 
+      text: 'text-purple-800 dark:text-purple-100' 
+    };
+  }
+};
 
 const Message = ({ message }) => {
   const isUser = message.sender === 'user';
   
+  // Get color classes based on message length
+  const colorClasses = useMemo(() => {
+    if (isUser) {
+      return getMessageColors(message.text.length);
+    }
+    return { 
+      background: 'bg-gray-200 dark:bg-gray-700', 
+      text: 'text-gray-800 dark:text-gray-200'
+    };
+  }, [isUser, message.text.length]);
+  
   return (
-    <div 
-      className={`animate-fade-in flex ${isUser ? 'justify-end' : 'justify-start'}`}
-    >
-      <div 
-        className={`max-w-[80%] md:max-w-[70%] rounded-lg p-4 shadow-sm transition-all duration-500 ease-in-out ${
-          isUser 
-            ? `${message.colorClass || 'bg-chatgpt-blue'} text-white rounded-br-none` 
-            : 'bg-white text-gray-800 rounded-bl-none'
-        }`}
-      >
-        <div className="flex items-start">
-          {!isUser && (
-            <div className="mr-3 flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-                </svg>
-              </div>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-fade-in transition-colors duration-300`}>
+      <div className="flex items-end space-x-2 max-w-[90%]">
+        {!isUser && (
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-full h-full bg-gray-800 dark:bg-gray-700 flex items-center justify-center text-white transition-colors duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+              </svg>
             </div>
-          )}
-          <div className="flex-1">
-            <p className="text-sm md:text-base whitespace-pre-wrap">{message.text}</p>
           </div>
-          {isUser && (
-            <div className="ml-3 flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-              </div>
+        )}
+        
+        <div 
+          className={`max-w-[calc(100%-40px)] break-words rounded-2xl py-3 px-4 ${isUser 
+            ? `${colorClasses.background} ${colorClasses.text} transition-colors duration-500` 
+            : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition-colors duration-300'}`}
+        >
+          <p className="text-sm md:text-base break-words overflow-hidden">{message.text}</p>
+          <div className="mt-1 text-xs text-right opacity-70 dark:text-gray-300">
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+        
+        {isUser && (
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-full h-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white font-bold transition-colors duration-300">
+              U
             </div>
-          )}
-        </div>
-        <div className="mt-1 text-xs text-right opacity-70">
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,18 +1,52 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTheme } from './contexts/ThemeContext';
 import { getPromptColor } from './utils/colorUtils';
 import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatInput from './components/ChatInput';
+import ColorChangingTextareaExample from './components/ColorChangingTextareaExample';
 
 function App() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentInput, setCurrentInput] = useState('');
   const messagesEndRef = useRef(null);
+  const { darkMode } = useTheme();
+  
+  // Determine the background color based on input length and dark mode
+  let backgroundColorClass;
+  
+  if (currentInput.length === 0) {
+    // Default background when there's no input
+    backgroundColorClass = darkMode ? 'bg-gray-900' : 'bg-white';
+  } else if (currentInput.length <= 50) {
+    // Green background (0-50 chars)
+    backgroundColorClass = darkMode ? 'bg-green-800' : 'bg-green-100';
+  } else if (currentInput.length <= 150) {
+    // Yellow background (51-150 chars)
+    backgroundColorClass = darkMode ? 'bg-yellow-800' : 'bg-yellow-100';
+  } else if (currentInput.length <= 300) {
+    // Red background (151-300 chars)
+    backgroundColorClass = darkMode ? 'bg-red-800' : 'bg-red-100';
+  } else {
+    // Purple background (301+ chars)
+    backgroundColorClass = darkMode ? 'bg-purple-800' : 'bg-purple-100';
+  }
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Apply background color to body element directly
+  useEffect(() => {
+    document.body.className = backgroundColorClass + ' transition-all duration-500 ease-in-out';
+    
+    // Cleanup function to reset body class when component unmounts
+    return () => {
+      document.body.className = '';
+    };
+  }, [backgroundColorClass]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -28,8 +62,6 @@ function App() {
       text: message,
       sender: 'user',
       timestamp: new Date().toISOString(),
-      length: message.length,
-      colorClass: getPromptColor(message.length).background,
     };
     
     setMessages(prevMessages => [...prevMessages, userMessage]);
@@ -44,8 +76,6 @@ function App() {
         text: response,
         sender: 'assistant',
         timestamp: new Date().toISOString(),
-        length: response.length,
-        colorClass: getPromptColor(response.length).background,
       };
       
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
@@ -67,17 +97,39 @@ function App() {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
+  // Toggle between chat interface and textarea example
+  const [showExample, setShowExample] = useState(false);
+
+  // Apply the background color to the entire app
   return (
-    <div className="flex flex-col h-screen bg-chatgpt-gray">
+    <div className={`flex flex-col h-screen ${backgroundColorClass} transition-all duration-500 ease-in-out`}>
       <Header />
-      <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full">
-        <ChatHistory 
-          messages={messages} 
-          loading={loading} 
-          messagesEndRef={messagesEndRef} 
-        />
-        <ChatInput onSendMessage={handleSendMessage} disabled={loading} />
-      </main>
+      <div className="py-2 px-4 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+        <button 
+          onClick={() => setShowExample(!showExample)}
+          className="px-4 py-2 bg-chatgpt-blue dark:bg-blue-600 text-white rounded-md hover:bg-opacity-90 transition-all"
+        >
+          {showExample ? 'Show Chat Interface' : 'Show Textarea Example'}
+        </button>
+      </div>
+      {showExample ? (
+        <main className="flex-1 overflow-auto transition-colors duration-300">
+          <ColorChangingTextareaExample />
+        </main>
+      ) : (
+        <main className="flex-1 overflow-hidden flex flex-col max-w-5xl mx-auto w-full transition-colors duration-300">
+          <ChatHistory 
+            messages={messages} 
+            loading={loading} 
+            messagesEndRef={messagesEndRef} 
+          />
+          <ChatInput 
+            onSendMessage={handleSendMessage} 
+            disabled={loading} 
+            onInputChange={setCurrentInput}
+          />
+        </main>
+      )}
     </div>
   );
 }
