@@ -1,6 +1,6 @@
 ===== PROJECT CODE REFERENCE =====
 ChatGPT Interface - React & Tailwind CSS Implementation
-Updated: May 6, 2025
+Updated: May 8, 2025
 
 ===== FEATURES =====
 1. Dynamic color-changing input based on character count
@@ -19,6 +19,11 @@ Updated: May 6, 2025
    - Persists user preference in localStorage
    - Responsive to system preference (prefers-color-scheme)
 
+4. OpenAI API Integration
+   - Secure handling of API key via environment variables
+   - Graceful fallback to mock responses if API key is missing
+   - Error handling for API failures with visual feedback
+
 ===== package.json =====
 {
   "name": "chatgpt-interface",
@@ -28,6 +33,7 @@ Updated: May 6, 2025
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "openai": "^4.20.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -217,6 +223,7 @@ import Header from './components/Header';
 import { useTheme } from './contexts/ThemeContext';
 import ChatHistory from './components/ChatHistory';
 import ChatInput from './components/ChatInput';
+import { sendMessageToOpenAI, formatConversationForOpenAI } from './utils/openaiService';
 
 function App() {
   const [messages, setMessages] = useState([]);
@@ -249,10 +256,17 @@ function App() {
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setLoading(true);
     
-    // Simulate API call with a delay
-    setTimeout(() => {
-      // Mock response from assistant
-      const response = getAssistantResponse(message);
+    try {
+      // Get updated messages including the new user message
+      const updatedMessages = [...messages, userMessage];
+      
+      // Format messages for OpenAI API
+      const formattedMessages = formatConversationForOpenAI(updatedMessages);
+      
+      // Send to OpenAI API and get response
+      const response = await sendMessageToOpenAI(formattedMessages);
+      
+      // Create assistant message with the response
       const assistantMessage = {
         id: Date.now() + 1,
         text: response,
@@ -263,8 +277,20 @@ function App() {
       };
       
       setMessages(prevMessages => [...prevMessages, assistantMessage]);
+    } catch (error) {
+      // Handle errors from the API
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: `Sorry, there was an error: ${error.message}`,
+        sender: 'assistant',
+        timestamp: new Date().toISOString(),
+        isError: true,
+      };
+      
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   // Mock function to generate assistant responses
@@ -663,6 +689,85 @@ export const getPromptColor = (length, theme = null) => {
     percent
   };
 };
+
+===== src/utils/openaiService.js =====
+import OpenAI from 'openai';
+
+/**
+ * Creates and returns an OpenAI client instance
+ * @returns {OpenAI} OpenAI client instance
+ */
+const getOpenAIInstance = () => {
+  const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+  if (!apiKey) {
+    console.error('OpenAI API key is missing. Please check your .env file.');
+    throw new Error('OpenAI API key is missing.');
+  }
+  return new OpenAI({ apiKey: apiKey });
+};
+
+/**
+ * Formats conversation history for OpenAI API
+ * @param {Array} messages - Array of message objects
+ * @returns {Array} - Formatted messages for OpenAI API
+ */
+export const formatConversationForOpenAI = (messages) => {
+  return messages.map(msg => ({
+    role: msg.sender === 'user' ? 'user' : 'assistant',
+    content: msg.text
+  }));
+};
+
+/**
+ * Sends a message to OpenAI API and returns the response
+ * @param {Array} messages - Array of formatted message objects
+ * @returns {Promise<string>} - The assistant's response
+ */
+export const sendMessageToOpenAI = async (messages) => {
+  try {
+    // Check if API key is available
+    if (!process.env.REACT_APP_OPENAI_API_KEY) {
+      console.warn('OpenAI API key is missing. Using mock response instead.');
+      return getMockResponse();
+    }
+    
+    const openai = getOpenAIInstance();
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+    
+    return response.choices[0].message.content;
+  } catch (error) {
+    console.error('Error calling OpenAI API:', error);
+    throw new Error(`Failed to get response: ${error.message}`);
+  }
+};
+
+/**
+ * Generates a mock response when API is not available
+ * @returns {string} - A mock response
+ */
+const getMockResponse = () => {
+  const responses = [
+    "I'm an AI assistant, how can I help you today?",
+    "That's an interesting question. Let me think about that...",
+    "I'm here to assist with any questions you might have.",
+    "I understand your question. Here's what I know about that topic...",
+    "Thanks for asking! I'd be happy to help with that.",
+  ];
+  
+  return responses[Math.floor(Math.random() * responses.length)];
+};
+
+export { getOpenAIInstance };
+
+===== .env.example =====
+# OpenAI API key - Replace with your actual API key
+REACT_APP_OPENAI_API_KEY=your_openai_api_key_here
 
 ===== src/contexts/ThemeContext.js =====
 import React, { createContext, useState, useEffect, useContext } from 'react';
